@@ -502,9 +502,10 @@ def reachability(self, goal=None, fallback="its", tool="sa",
     :param goal: goal specification (e.g., ``"a=1"``)
     :type goal: str or list(str) or .Goal
     :keyword kwgoal: keywords for goal specification (instead of `goal` argument)
-    :keyword str fallback: fallback to exact model-checking if static analysis
+    :keyword fallback: fallback to exact model-checking if static analysis
         is not conclusive. Supported model-checkers are: ``"its"``, ``"nusmv"``,
-        and ``"mole"``.
+        and ``"mole"`` or a python function. Can be a list of fallbacks.
+    :type fallback: str or list(str)
     :keyword str tool: tool for the model-checking:
         * ``"sa"``: static analysis with potential fallback method if not
         conclusive
@@ -523,41 +524,45 @@ def reachability(self, goal=None, fallback="its", tool="sa",
     """
     goal = Goal.from_arg(goal, **kwgoal)
 
-    if fallback:
-        fallback = fallback.lower()
-        if fallback == "none":
-            fallback = None
-    tool = tool.lower()
-    assert fallback in __reachability_tools + [None]
-    assert tool in ["sa"] + __reachability_tools
-    if tool == "sa":
-        cp = _run_tool("pint-reach", goal, *sa_args, input_model=self, timeout=timeout)
-        output = cp.stdout.decode()
-        output = ternary(json.loads(output))
-        if output == Inconc and fallback is not None:
-            dbg("Approximations are inconclusive, fallback to exact model-checking with `%s`" % fallback)
-            tool = fallback
-    reduce_for_goal = goal if reduce_for_goal else None
-    if tool == "sa":
-        pass
-    elif tool == "nusmv":
-        smv = self.to_nusmv(skip_init=False, reduce_for_goal=reduce_for_goal)
-        smv.add_ctl(EF(goal.to_ctl()))
-        output = smv.alltrue(timeout=timeout)
-    elif tool == "its":
-        itsm = self.to_its()
-        spec = goal.to_ctl()
-        if goal.is_state_formula():
-            output = itsm.reachability(spec, timeout=timeout)
+    fallbacks = fallback if isinstance(fallback, list) else []
+    if fallback is not None:
+        fallbacks.append(fallback)
+
+    chain = [tool] + fallbacks
+
+    first_run = True
+    for tool in chain:
+        if tool == "sa":
+            cp = _run_tool("pint-reach", goal, *sa_args, input_model=self, timeout=timeout)
+            output = cp.stdout.decode()
+            output = ternary(json.loads(output))
         else:
-            output = itsm.verify_ctl(spec, timeout=timeout)
-    else: # mole
-        cp = _run_tool("pint-%s" % tool, goal, input_model=self,
-                        reduce_for_goal=reduce_for_goal,
-                        timeout=timeout)
-        output = cp.stdout.decode()
-        output = ternary(json.loads(output))
-    return output
+            if first_run:
+                if reduce_for_goal:
+                    self = self.reduce_for_goal(goal, squeeze_preserve=goal.automata)
+                first_run = False
+            if tool == "nusmv":
+                smv = self.to_nusmv(skip_init=False)
+                smv.add_ctl(EF(goal.to_ctl()))
+                output = smv.alltrue(timeout=timeout)
+            elif tool == "its":
+                itsm = self.to_its()
+                spec = goal.to_ctl()
+                if goal.is_state_formula():
+                    output = itsm.reachability(spec, timeout=timeout)
+                else:
+                    output = itsm.verify_ctl(spec, timeout=timeout)
+            elif tool == "mole":
+                cp = _run_tool("pint-%s" % tool, goal, input_model=self,
+                                timeout=timeout)
+                output = cp.stdout.decode()
+                output = ternary(json.loads(output))
+            else:
+                output = tool(self, goal)
+        if output != Inconc:
+            return output
+        dbg(f"{tool} is inconclusive...")
+    return Inconc
 
 #TODO requirements
 
