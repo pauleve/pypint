@@ -293,6 +293,28 @@ class Goal:
             and len(self.__goals[0]) == 1 \
             and len(self.__goals[0][0]) == 1 \
 
+    def local_state(self):
+        """
+        Returns the local state specified by the goal
+        """
+        assert self.is_simple_goal
+        return list(self.__goals[0][0].items())[0]
+
+    @property
+    def is_substate(self):
+        """
+        ``True`` iff the goal is a sub-state
+        """
+        return len(self.__goals) == 1 \
+            and len(self.__goals[0]) == 1
+
+    def substate(self):
+        """
+        Returns the substate specified by the goal
+        """
+        assert self.is_substate
+        return self.__goals[0][0]
+
     def is_state_formula(self):
         """
         ``True`` iff the goal corresponds to a state formula (no sequence of

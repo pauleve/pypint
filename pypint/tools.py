@@ -292,6 +292,21 @@ def reduce_for_goal(self, goal=None, squeeze=True, squeeze_preserve=None, **kwgo
     return fm
 
 @modeltool
+def inject_goal(self, goal=None, **kwgoal):
+    """
+    Whenever the goal is not a single local state, creates a new automaton which
+    will reach is final state whenever the goal is complete.
+    """
+    goal = Goal.from_arg(goal, **kwgoal)
+    if goal.is_simple_goal:
+        return self, goal.local_state()
+
+    fm = _model_modification(self, ["--inject-goal", goal.to_pint()])
+    a = "_pint_goal"
+    ls = (a, max(fm.local_states[a]))
+    return fm, ls
+
+@modeltool
 def lock(self, substate={}, **kwstate):
     """
     Returns the AN where the specified automata are lock to the given local state.
