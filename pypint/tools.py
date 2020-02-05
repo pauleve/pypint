@@ -540,7 +540,7 @@ def reachability(self, goal=None, fallback="its", tool="sa",
     goal = Goal.from_arg(goal, **kwgoal)
 
     fallbacks = fallback if isinstance(fallback, list) else []
-    if fallback is not None:
+    if fallback is not None and not isinstance(fallback, list):
         fallbacks.append(fallback)
 
     chain = [tool] + fallbacks
