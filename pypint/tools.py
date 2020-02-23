@@ -567,6 +567,12 @@ def reachability(self, goal=None, fallback="its", tool="sa",
                     output = itsm.reachability(spec, timeout=timeout)
                 else:
                     output = itsm.verify_ctl(spec, timeout=timeout)
+            elif tool == "its-reach":
+                m, mgoal = self.inject_goal(goal)
+                mgoal = Goal.from_arg(mgoal)
+                itsm = m.to_its()
+                spec = mgoal.to_ctl()
+                output = itsm.reachability(spec, timeout=timeout)
             elif tool == "mole":
                 cp = _run_tool("pint-%s" % tool, goal, input_model=self,
                                 timeout=timeout)
