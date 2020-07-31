@@ -717,7 +717,7 @@ def reachable_stategraph(self, timeout=None):
     dotfile = new_output_file(ext="dot")
     _run_tool("pint-sg", "--state-graph", dotfile,
                 input_model=self, stdout=None, timeout=timeout)
-    g = nx.DiGraph(nx.nx_agraph.read_dot(dotfile))
+    g = nx.DiGraph(nx.nx_pydot.read_dot(dotfile))
     os.unlink(dotfile)
     return g
 
