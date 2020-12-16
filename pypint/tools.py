@@ -359,7 +359,7 @@ def disable(self, local_states=[], **kwstate):
 
 @modeltool
 def cutsets(self, goal=None, maxsize=5, exclude=[], exclude_initial_state=False,
-                exclude_goal_automata=True, timeout=None, **kwgoal):
+                exclude_goal_automata=True, timeout=None, quiet=False, **kwgoal):
     """
     Computes sets of local states which are used in all the paths from the
     initial state to `goal`:
@@ -381,6 +381,8 @@ def cutsets(self, goal=None, maxsize=5, exclude=[], exclude_initial_state=False,
     :keyword bool exclude_goal_automata:
         exclude automata involved in the goal specification
     :param int timeout: command timeout in seconds
+    :keyword bool quiet:
+        avoid printing warnings and informations
     :rtype: list(dict[str,int or int list])
 
     .. seealso:: method :py:meth:`.oneshot_mutations_for_cut`
@@ -389,9 +391,10 @@ def cutsets(self, goal=None, maxsize=5, exclude=[], exclude_initial_state=False,
 
     args = []
 
-    info("This computation is an *under-approximation*: returned cut-sets \
+    if not quiet:
+        info("This computation is an *under-approximation*: returned cut-sets \
 are all valid, but they may be non-minimal, and some cut-sets may be missed.")
-    info("Limiting results to cut-sets with at most %s elements. Use `maxsize` argument to change." % maxsize)
+        info("Limiting results to cut-sets with at most %s elements. Use `maxsize` argument to change." % maxsize)
 
     if exclude_initial_state:
         args.append("--no-init-cutsets")
@@ -415,6 +418,7 @@ def oneshot_mutations_for_cut(self, goal=None, maxsize=5,
         exclude=[],
         exclude_goal_automata=True,
         timeout=None,
+        quiet=False,
         **kwgoal):
     """
     Computes sets of local states for which the locking in the initial state
@@ -432,13 +436,16 @@ def oneshot_mutations_for_cut(self, goal=None, maxsize=5,
     :keyword bool exclude_goal_automata:
         exclude automata involved in the goal specification
     :param int timeout: command timeout in seconds
+    :keyword bool quiet:
+        avoid printing warnings and informations
     :rtype: list(dict[str,int])
     """
     goal = Goal.from_arg(goal, **kwgoal)
 
-    info("This computation is an *under-approximation*: returned mutations \
+    if not quiet:
+        info("This computation is an *under-approximation*: returned mutations \
 are all valid, but they may be non-minimal, and some solutions may be missed.")
-    info("Limiting solutions to mutations of at most %s automata. Use `maxsize` argument to change." % maxsize)
+        info("Limiting solutions to mutations of at most %s automata. Use `maxsize` argument to change." % maxsize)
 
     args = ["--oneshot-mutations-for-cut", str(maxsize)]
 
@@ -456,7 +463,7 @@ are all valid, but they may be non-minimal, and some solutions may be missed.")
     return json.loads(output)
 
 @modeltool
-def bifurcations(self, goal=None, method="ua", timeout=None, **kwgoal):
+def bifurcations(self, goal=None, method="ua", timeout=None, quiet=False, **kwgoal):
     """
     Identify local transitions after which, in some state, `goal` is no longer reachable.
 
@@ -471,6 +478,8 @@ def bifurcations(self, goal=None, method="ua", timeout=None, **kwgoal):
           states set prior computation (NP+PSPACE)
         * ``"ua"`` for under-approximation of bifurcation transitions (NP)
     :param int timeout: command timeout in seconds
+    :keyword bool quiet:
+        avoid printing warnings and informations
     :rtype: :py:class:`.LocalTransition` list
     """
     assert method in ["exact", "ua", "mole+ua", "nusmv", "its"]
@@ -491,7 +500,8 @@ def bifurcations(self, goal=None, method="ua", timeout=None, **kwgoal):
         r = itsm.verify_ctls(ctls, timeout=timeout)
         return [tr for (tr, r) in zip(self.local_transitions, r) if r]
     else:
-        info("This computation is an *under-approximation*: \
+        if not quiet:
+            info("This computation is an *under-approximation*: \
 returned transitions are all bifurcation transitions, but some may have been missed. \
 Use `method=\"exact\"` for complete identification.")
         cmd = "pint-reach"
