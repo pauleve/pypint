@@ -1,0 +1,40 @@
+{% set name = "pypint" %}
+{% set version = "9999" %}
+
+package:
+  name: '{{ name|lower }}'
+  version: '{{ version }}'
+
+source:
+  path: ../
+
+build:
+  script: python setup.py install --single-version-externally-managed --record=record.txt
+  noarch: python
+  entry_points:
+    - pint-import=pypint.console:import_model
+
+requirements:
+  build:
+    - python
+    - setuptools
+  run:
+    - python
+    - colomoto_jupyter >=0.5.0
+    - boolean.py
+    - ginsim-python
+    - networkx >=2.0
+    - pint >=2018.07.10
+
+test:
+  imports:
+    - pypint
+    - pypint.converters
+  commands:
+    - pint-import --help
+
+about:
+  home: http://loicpauleve.name/pint
+  license: CeCILL
+  summary: Python interface to Pint
+  description: Python interface to Pint
