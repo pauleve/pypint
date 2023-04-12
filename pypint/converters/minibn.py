@@ -1,3 +1,4 @@
+import boolean.boolean
 from colomoto_jupyter.sessionfiles import new_output_file
 from pypint.converters.lib.boolean_utils import BoolToAN
 from pypint.converters.lib.export_utils import pint_protect
@@ -14,7 +15,7 @@ def import_minibn(f):
     ba = f.ba
 
     def ls_of_lit(lit):
-        if isinstance(lit, ba.NOT):
+        if isinstance(lit, boolean.boolean.NOT):
             return (lit.args[0].obj, 0)
         else:
             return (lit.obj, 1)
