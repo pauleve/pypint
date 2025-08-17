@@ -57,13 +57,13 @@ if not __SETUP_DONE:
     setup_environ()
 
 if IN_IPYTHON:
-    from colomoto_jupyter import jupyter_setup
+    from colomoto_jupyter import jupyter_setup, HAS_IPYLAB
 
     menu = [
         {"name":"Load model",
             "snippet":["an = pypint.load(\"filename_or_URL\")"]},
         {"name":"Upload model",
-            "snippet":["an = pypint.load()"]},
+            "snippet":["an = pypint.upload('an')"]},
         "---",
         {"name":"Model description",
             "sub-menu": [
@@ -147,57 +147,55 @@ if IN_IPYTHON:
         {"name": "Documentation",
             "external-link": "https://loicpauleve.name/pint/doc/api.html"}
     ]
-    toolbar = [
-        {"name": "upload", "setup": {
-            "icon": "fa-upload",
-            "help": "Upload model",
-            "handler": "action_upload_model"}},
-        {"name": "enable-debug", "setup": {
-            "help": "Enable debug",
-            "handler": "action_enable_debug"}},
-        {"name": "disable-debug", "setup": {
-            "help": "Disable debug",
-            "handler": "action_disable_debug"}},
-    ]
-
-
-    js_api = {
-    "action_upload_model": """function() {
-        var cell = Jupyter.notebook.get_selected_cell();
-        cell.set_text('an = '+pypint_jsapi.module_alias+'.load()');
-        cell.focus_editor();
-    }""",
-    "action_enable_debug": """function() {
-        IPython.notebook.kernel.execute(pypint_jsapi.module_alias+".enable_dbg()");
-        pypint_jsapi.debug_enabled(true);
-    }""",
-    "action_disable_debug": """function() {
-        IPython.notebook.kernel.execute(pypint_jsapi.module_alias+".disable_dbg()");
-        pypint_jsapi.debug_enabled(false);
-    }""",
-    "btn_enable_debug": "null",
-    "btn_disable_debug": "null",
-    "debug_enabled": """function(enabled) {
-        if (enabled) {
-            this.btn_enable_debug.hide();
-            this.btn_disable_debug.show();
-        } else {
-            this.btn_enable_debug.show();
-            this.btn_disable_debug.hide();
-        }
-    }""",
-    "post_install_callback": """function() {
-        this.btn_enable_debug = $("#pypint-toolbar > button[data-jupyter-action='pypint:enable-debug']");
-        this.btn_disable_debug = $("#pypint-toolbar > button[data-jupyter-action='pypint:disable-debug']");
-        this.btn_enable_debug[0].innerHTML = "enable debug";
-        this.btn_disable_debug[0].innerHTML = "disable debug";
-        this.debug_enabled(%s);
-    }""" % (1 if CFG["dbg"] else 0)
-    }
+    
+#        {"name": "enable-debug", "setup": {
+#            "help": "Enable debug",
+#            "handler": "action_enable_debug"}},
+#        {"name": "disable-debug", "setup": {
+#            "help": "Disable debug",
+#            "handler": "action_disable_debug"}},
+#    ]
+#
+#
+#    js_api = {
+#    "action_upload_model": """function() {
+#        var cell = Jupyter.notebook.get_selected_cell();
+#        cell.set_text('an = '+pypint_jsapi.module_alias+'.load()');
+#        cell.focus_editor();
+#    }""",
+#    "action_enable_debug": """function() {
+#        IPython.notebook.kernel.execute(pypint_jsapi.module_alias+".enable_dbg()");
+#        pypint_jsapi.debug_enabled(true);
+#    }""",
+#    "action_disable_debug": """function() {
+#        IPython.notebook.kernel.execute(pypint_jsapi.module_alias+".disable_dbg()");
+#        pypint_jsapi.debug_enabled(false);
+#    }""",
+#    "btn_enable_debug": "null",
+#    "btn_disable_debug": "null",
+#    "debug_enabled": """function(enabled) {
+#        if (enabled) {
+#            this.btn_enable_debug.hide();
+#            this.btn_disable_debug.show();
+#        } else {
+#            this.btn_enable_debug.show();
+#            this.btn_disable_debug.hide();
+#        }
+#    }""",
+#    "post_install_callback": """function() {
+#        this.btn_enable_debug = $("#pypint-toolbar > button[data-jupyter-action='pypint:enable-debug']");
+#        this.btn_disable_debug = $("#pypint-toolbar > button[data-jupyter-action='pypint:disable-debug']");
+#        this.btn_enable_debug[0].innerHTML = "enable debug";
+#        this.btn_disable_debug[0].innerHTML = "disable debug";
+#        this.debug_enabled(%s);
+#    }""" % (1 if CFG["dbg"] else 0)
+#    }
 
     jupyter_setup(__name__, label="Pint",
         color="red",
-        menu=menu,
-        toolbar=toolbar,
-        js_api=js_api)
+        menu=menu)
 
+if IN_IPYTHON and HAS_IPYLAB:
+    from colomoto_jupyter.upload import jupyter_upload
+    def upload(model_var: str):
+        return jupyter_upload("pypint", model_var, "load")

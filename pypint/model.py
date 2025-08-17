@@ -428,7 +428,7 @@ def load(filename=None, format=None, simplify=True, **opts):
 
     if filename is None:
         if IN_IPYTHON:
-            return jupyter_upload("pypint.load", "pypint.load")
+            return jupyter_upload("pypint", "an", "load")
         else:
             raise TypeError("missing filename argument")
 
